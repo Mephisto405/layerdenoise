@@ -103,7 +103,7 @@ class LayerNet(nn.Module):
 		# Splat samples to layers
 		for i in range(0, sh[1]): # loop over samples
 			w = self._sample_partitioner(torch.cat((embedding[:, i, ...], context), dim=1))
-			w = torch.softmax(w, dim=1) / self.num_samples
+			w = torch.softmax(w, dim=1) / sh[1]
 
 			for j in range(self.layers):
 				l_radiance[j] += radiance[:, i, ...] * w[:, j:j+1, ...]
