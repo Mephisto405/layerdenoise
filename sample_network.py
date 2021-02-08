@@ -82,7 +82,7 @@ class SampleNet(nn.Module):
 				if m.bias is not None:
 					m.bias.data.zero_()
 
-	def forward(self, sequenceData, epoch):
+	def forward(self, sequenceData):
 		num_weights = self.kernel_size*self.kernel_size
 
 		frame    = sequenceData.frameData[0]
@@ -140,4 +140,4 @@ class SampleNet(nn.Module):
 		return utils.object_from_dict({'color' : filtered})
 
 	def inference(self, sequenceData):
-		return self.forward(sequenceData, 0)
+		return self.forward(sequenceData)

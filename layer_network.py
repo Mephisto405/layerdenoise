@@ -25,18 +25,16 @@ EPSILON = 0.000001 # Small epsilon to avoid division by zero
 ###############################################################################
 
 class LayerNet(nn.Module):
-	def __init__(self, sequenceHeader, tonemapper, splat, num_samples, kernel_size):
+	def __init__(self, n_in, tonemapper, splat):
 
 		super(LayerNet, self).__init__() 
 		self.tonemapper      = tonemapper  
 		self.output_channels = 128
 		self.embed_channels  = 32 
-		self.kernel_size     = kernel_size
-		self.num_samples     = int(num_samples)
+		self.kernel_size     = 17
+		#self.num_samples     = int(num_samples)
 		self.splat           = splat
-		self.resolution      = sequenceHeader.resolution
-		frameShape           = sequenceHeader.frameShape
-		self.input_channels  = frameShape.color[1] + frameShape.normals_depth[1] + frameShape.albedo[1] + frameShape.specular[1] + frameShape.uvt[1] + frameShape.motionvecs[1]
+		self.input_channels  = n_in
 		self.layers          = 2
 
 		# Sample reducer: Maps from input channels to sample embeddings, uses 1x1 convolutions
@@ -80,7 +78,7 @@ class LayerNet(nn.Module):
 				if m.bias is not None:
 					m.bias.data.zero_()
 
-	def forward(self, sequenceData, epoch):
+	def forward(self, sequenceData):
 		frame = sequenceData.frameData[0]
 
 		radiance = frame.color # Linear color values
@@ -146,4 +144,4 @@ class LayerNet(nn.Module):
 		return utils.object_from_dict({'color' : col_sum})
 
 	def inference(self, sequenceData):
-		return self.forward(sequenceData, 0)
+		return self.forward(sequenceData)
