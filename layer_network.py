@@ -78,25 +78,17 @@ class LayerNet(nn.Module):
 				if m.bias is not None:
 					m.bias.data.zero_()
 
-	def forward(self, sequenceData):
-		frame = sequenceData.frameData[0]
+	def forward(self, samples):
+		radiance = samples["radiance"]
+		features = samples["features"]
 
-		radiance = frame.color # Linear color values
-		
-		rgb           = self.tonemapper(frame.color)
-		normals_depth = frame.normals_depth
-		motionvecs    = frame.motionvecs
-		albedo        = frame.albedo
-		specular      = frame.specular
-		uvt           = frame.uvt
-
-		xc = torch.cat((rgb, normals_depth, motionvecs, albedo, specular, uvt), dim=2)
+		#xc = torch.cat((rgb, normals_depth, motionvecs, albedo, specular, uvt), dim=2)
 
 		# loop over samples to create embeddings
-		sh = xc.shape
+		sh = features.shape
 		embedding = torch.cuda.FloatTensor(sh[0], sh[1], self.embed_channels, sh[3], sh[4]).fill_(0)
 		for i in range(sh[1]):
-			embedding[:, i, ...] = self._red1(xc[:,i,...])
+			embedding[:, i, ...] = self._red1(features[:,i,...])
 		avg_embeddings = embedding.mean(dim=1) # average over embeddings dimension
 
 		# Run U-net
@@ -109,7 +101,7 @@ class LayerNet(nn.Module):
 		l_e = [torch.cuda.FloatTensor(sh[0], self.embed_channels, sh[3], sh[4]).fill_(0) for i in range(self.layers)]
 
 		# Splat samples to layers
-		for i in range(0, self.num_samples): # loop over samples
+		for i in range(0, sh[1]): # loop over samples
 			w = self._sample_partitioner(torch.cat((embedding[:, i, ...], context), dim=1))
 			w = torch.softmax(w, dim=1) / self.num_samples
 
@@ -141,7 +133,7 @@ class LayerNet(nn.Module):
 			col_sum     += filtered_rad * k
 			k            = (1.0 - alpha) * k
 
-		return utils.object_from_dict({'color' : col_sum})
+		return col_sum
 
 	def inference(self, sequenceData):
 		return self.forward(sequenceData)
