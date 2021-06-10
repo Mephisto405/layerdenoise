@@ -34,7 +34,7 @@ class LayerNet(nn.Module):
 		self.kernel_size     = 17
 		#self.num_samples     = int(num_samples)
 		self.splat           = splat
-		self.input_channels  = n_in
+		self.input_channels  = n_in # 24
 		self.layers          = 2
 
 		# Sample reducer: Maps from input channels to sample embeddings, uses 1x1 convolutions
@@ -87,6 +87,7 @@ class LayerNet(nn.Module):
 		# loop over samples to create embeddings
 		sh = features.shape
 		embedding = torch.cuda.FloatTensor(sh[0], sh[1], self.embed_channels, sh[3], sh[4]).fill_(0)
+		#print(embedding.shape)
 		for i in range(sh[1]):
 			embedding[:, i, ...] = self._red1(features[:,i,...])
 		avg_embeddings = embedding.mean(dim=1) # average over embeddings dimension
